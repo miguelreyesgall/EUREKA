@@ -471,7 +471,65 @@ function buildDemoCompany() {
     closingAnswers: []
   }
 
-  return { company, sessions: [completedSession, draftSession, buildMandoDemoSession(companyId)] }
+  return {
+    company,
+    sessions: [completedSession, draftSession, buildMandoDemoSession(companyId), buildMandoDraftSession(companyId)]
+  }
+}
+
+// Sesión de "Mando Íntegro" todavía en borrador: sirve para mostrar el módulo
+// de diagnóstico previo, con parte del grupo ya respondido y parte pendiente.
+function buildMandoDraftSession(companyId) {
+  const withDiagnostic = (ranked) => {
+    const net = { cabeza: 0, corazon: 0, manos: 0 }
+    ranked.forEach((id, i) => {
+      net[id] = [6, 2, -4][i]
+    })
+    return {
+      net,
+      ranked,
+      dominant: ranked[0],
+      weakest: ranked[2],
+      answeredRows: 18,
+      at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString()
+    }
+  }
+
+  return {
+    id: 'se_demo_mando_draft',
+    companyId,
+    gameId: 'mando-integro',
+    name: 'Jefes de área · Sesión de liderazgo',
+    purpose: 'Conocer desde dónde lidera cada jefe antes de rediseñar los comités.',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
+    completedAt: null,
+    status: 'draft',
+    participants: [
+      {
+        id: 'pa_d_1',
+        name: 'Natalia Ocampo',
+        role: 'Directora de Servicio',
+        diagnostic: withDiagnostic(['corazon', 'cabeza', 'manos'])
+      },
+      {
+        id: 'pa_d_2',
+        name: 'Felipe Arango',
+        role: 'Gerente de Planta',
+        diagnostic: withDiagnostic(['manos', 'cabeza', 'corazon'])
+      },
+      // Estos dos todavía no responden: así se ve el estado pendiente y el
+      // botón para copiarles el enlace del diagnóstico.
+      { id: 'pa_d_3', name: 'Carolina Mesa', role: 'Líder de Tecnología', diagnostic: null },
+      { id: 'pa_d_4', name: 'Sebastián Ruiz', role: 'Gerente Financiero', diagnostic: null }
+    ],
+    balance: { cabeza: 4, corazon: 4, manos: 4 },
+    position: 0,
+    turnIndex: 0,
+    rounds: [],
+    closingAnswers: {},
+    learningMatrix: {},
+    commitments: []
+  }
 }
 
 // Sesión de "Mando Íntegro" ya jugada hasta la Cumbre, con diagnósticos
