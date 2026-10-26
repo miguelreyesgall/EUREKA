@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { distinctStyles, MIN_STYLES_TO_PLACE } from './discGame'
 import { scoreDiagnostic, teamStartingBalance } from './diagnostic'
+import { scoreDiscDiagnostic } from './discDiagnostic'
 import { applyChoice, dilemmaForRound, SUMMIT } from './mandoIntegro'
 
 // -----------------------------------------------------------------------------
@@ -242,19 +243,26 @@ export const actions = {
     return session
   },
 
-  // El diagnóstico lo responde cada participante desde su propio enlace.
+  // La encuesta previa la responde cada jugador desde su propio enlace. En
+  // Código DISC además asigna su ficha de identidad; en Mando Íntegro define
+  // dónde arranca su Balanza.
   saveDiagnostic(sessionId, participantId, answers) {
-    const result = scoreDiagnostic(answers)
+    const session = state.sessions.find((s) => s.id === sessionId)
+    const isDisc = session?.gameId === 'codigo-disc'
+    const result = isDisc ? scoreDiscDiagnostic(answers) : scoreDiagnostic(answers)
+    const diagnostic = { ...result, answers, at: new Date().toISOString() }
+
+    const applyTo = (p) =>
+      p.id === participantId ? { ...p, diagnostic, ...(isDisc ? { style: result.dominant } : {}) } : p
+
     setState((s) => ({
       ...s,
       sessions: s.sessions.map((sess) => {
         if (sess.id !== sessionId) return sess
-        return {
-          ...sess,
-          participants: sess.participants.map((p) =>
-            p.id === participantId ? { ...p, diagnostic: { ...result, answers, at: new Date().toISOString() } } : p
-          )
+        if (sess.teams) {
+          return { ...sess, teams: sess.teams.map((t) => ({ ...t, participants: t.participants.map(applyTo) })) }
         }
+        return { ...sess, participants: sess.participants.map(applyTo) }
       })
     }))
     return result

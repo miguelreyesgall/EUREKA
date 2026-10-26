@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Balanza from '../../components/Balanza'
 import SenderoBoard from '../../components/SenderoBoard'
+import DiagnosticRoster from '../../components/DiagnosticRoster'
 import Confetti from '../../components/Confetti'
 import RoundTimer from '../../components/RoundTimer'
 import { ProgressBar, SectionHeader, Tabs } from '../../components/ui'
@@ -69,68 +70,8 @@ function Lobby({ session }) {
         </div>
       </div>
 
-      {/* Diagnósticos */}
-      <div className="mt-5 card p-6">
-        <SectionHeader title="Diagnóstico previo">
-          Define desde dónde arranca la Balanza. {withDiag.length} de {session.participants.length} respondieron.
-        </SectionHeader>
-        <ProgressBar value={withDiag.length} max={session.participants.length} />
-
-        <div className="mt-4 divide-y divide-slate-100">
-          {session.participants.map((p) => {
-            const d = p.diagnostic
-            const dom = d ? DIMENSION_MAP[d.dominant] : null
-            const weak = d ? DIMENSION_MAP[d.weakest] : null
-            const url = `${window.location.origin}/diagnostico/${session.id}/${p.id}`
-            return (
-              <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
-                    style={{ background: dom?.color || '#cbd5e1' }}
-                  >
-                    {dom ? dom.label[0] : '?'}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-slate-800">{p.name}</div>
-                    <div className="truncate text-xs text-slate-400">{p.role}</div>
-                  </div>
-                </div>
-
-                {d ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="chip" style={{ background: `${dom.color}18`, color: dom.color }}>
-                      Domina {dom.label}
-                    </span>
-                    <span className="chip bg-slate-100 text-slate-500">Más débil: {weak.label}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="chip bg-amber-400/15 text-amber-600">Pendiente</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard?.writeText(url)
-                        toast.success(`Enlace de ${p.name.split(' ')[0]} copiado`)
-                      }}
-                      className="btn-ghost btn-sm"
-                    >
-                      Copiar enlace
-                    </button>
-                    <Link to={`/diagnostico/${session.id}/${p.id}`} className="btn-primary btn-sm">
-                      Responder
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {pending > 0 && (
-          <p className="mt-4 text-xs text-amber-600">
-            ⚠️ Puedes iniciar igual: quienes no respondieron arrancan en el centro de la Balanza (4-4-4).
-          </p>
-        )}
+      <div className="mt-5">
+        <DiagnosticRoster session={session} />
       </div>
     </div>
   )

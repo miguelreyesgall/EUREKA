@@ -142,6 +142,15 @@ function DiscSetup({ game }) {
           </div>
         </div>
 
+        <div className="card border-brand-200 bg-brand-50/50 p-5">
+          <h3 className="text-sm font-bold text-slate-800">La ficha la define la encuesta previa</h3>
+          <p className="mt-1.5 text-sm text-slate-600">
+            Al crear la sesión, cada jugador recibe su enlace para responder la encuesta DISC y su ficha de identidad
+            se asigna sola con el resultado. Puedes dejar el campo vacío — solo asígnala a mano si alguien no va a
+            alcanzar a responder.
+          </p>
+        </div>
+
         <div className="flex items-center justify-between">
           <h2 className="section-title">Equipos ({teams.length})</h2>
           <button type="button" onClick={addTeam} className="btn-ghost btn-sm">
@@ -182,8 +191,8 @@ function DiscSetup({ game }) {
 
                 {covered < MIN_STYLES_TO_PLACE && (
                   <p className="mt-2 text-xs text-amber-600">
-                    ⚠️ Este equipo tiene {covered} estilo(s) DISC distinto(s). Necesita al menos{' '}
-                    {MIN_STYLES_TO_PLACE} para poder colocar fichas.
+                    ⚠️ Por ahora este equipo tiene {covered} ficha(s) distinta(s). Necesita {MIN_STYLES_TO_PLACE} para poder
+                    colocar fichas — la encuesta previa suele resolverlo.
                   </p>
                 )}
 
@@ -207,7 +216,7 @@ function DiscSetup({ game }) {
                         value={p.style}
                         onChange={(e) => setParticipant(ti, pi, 'style', e.target.value)}
                       >
-                        <option value="">Estilo…</option>
+                        <option value="">Ficha (opcional)…</option>
                         {DISC_STYLES.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.id} · {s.label}
@@ -250,7 +259,7 @@ function DiscSetup({ game }) {
             )}
           </div>
           <button type="submit" className="btn-primary shrink-0">
-            Crear sesión y abrir sala →
+            Crear sesión y enviar encuestas →
           </button>
         </div>
       </form>

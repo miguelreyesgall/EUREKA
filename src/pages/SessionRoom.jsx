@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AppShell from '../components/AppShell'
 import StatusBadge from '../components/StatusBadge'
 import DiscBoard from '../components/DiscBoard'
+import DiagnosticRoster from '../components/DiagnosticRoster'
 import CardDeck from '../components/CardDeck'
 import RoundTimer from '../components/RoundTimer'
 import Scoreboard from '../components/Scoreboard'
@@ -147,6 +148,10 @@ function Lobby({ session }) {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <DiagnosticRoster session={session} />
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
