@@ -4,7 +4,7 @@ import DiscBoard from '../components/DiscBoard'
 import { IconArrowRight, IconCheck, IconSparkles } from '../components/icons'
 import { actions } from '../lib/store'
 import { DISC_STYLES, DECKS } from '../lib/discGame'
-import { GAMES } from '../lib/games'
+import { OWN_GAMES, PARTNER_GAMES } from '../lib/games'
 
 const DEMO_TEAM = {
   id: 'landing',
@@ -104,7 +104,7 @@ export default function Landing() {
           <div className="relative animate-fade-up [animation-delay:120ms]">
             <div className="card rotate-1 p-6 shadow-float">
               <div className="flex items-center justify-between">
-                <span className="chip bg-brand-50 text-brand-700">🎯 Punto de Encuentro</span>
+                <span className="chip bg-brand-50 text-brand-700">🎯 Código DISC</span>
                 <span className="text-xs font-medium text-slate-400">Mazo 4 / 6 · Conflicto</span>
               </div>
               <div className="mt-4 rounded-xl bg-gradient-to-br from-slate-900 to-ink-950 p-5 text-white">
@@ -196,7 +196,7 @@ export default function Landing() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
           <div>
             <span className="chip bg-white/10 text-brand-200">El juego insignia</span>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Punto de Encuentro</h2>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Código DISC</h2>
             <p className="mt-5 leading-relaxed text-slate-300">
               Cada jugador recibe una ficha de identidad DISC. Los equipos enfrentan {DECKS.length} mazos de retos —
               feedback, presión, cambio, conflicto, liderazgo y comunicación— y solo colocan su ficha en el punto de
@@ -232,33 +232,49 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <span className="section-title">Catálogo</span>
-            <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Un juego hoy, más en camino</h2>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Nuestros productos gamificados
+            </h2>
             <p className="mt-4 text-slate-600">
-              Punto de Encuentro ya está disponible. El resto del catálogo llega al mismo marketplace.
+              Dos juegos propios que se juegan y se miden desde la plataforma, más los kits físicos que llevamos a tu
+              sala en alianza con Formactiva.
             </p>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {GAMES.map((g) => (
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2">
+            {OWN_GAMES.map((g) => (
               <div key={g.id} className="card card-hover overflow-hidden">
                 <div
-                  className="flex h-28 items-center justify-center text-5xl"
+                  className="flex h-36 items-center justify-center text-6xl"
                   style={{ background: `linear-gradient(135deg, ${g.color}1f, ${g.color}08)` }}
                 >
                   {g.icon}
                 </div>
-                <div className="p-5">
-                  <h3 className="text-base font-bold text-slate-900">{g.name}</h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{g.tagline}</p>
-                  <div className="mt-3">
-                    {g.status === 'available' ? (
-                      <span className="chip bg-teal-500/10 text-teal-700">● Disponible</span>
-                    ) : (
-                      <span className="chip bg-slate-100 text-slate-500">Próximamente</span>
-                    )}
-                  </div>
+                <div className="p-6">
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: g.color }}>
+                    {g.category}
+                  </span>
+                  <h3 className="mt-1.5 text-lg font-extrabold text-slate-900">{g.name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{g.tagline}</p>
+                  <span className="chip mt-3 bg-teal-500/10 text-teal-700">● Jugable en la plataforma</span>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8">
+            <p className="mb-4 text-center text-xs font-bold uppercase tracking-wider text-slate-400">
+              En alianza con Formactiva · kits físicos
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {PARTNER_GAMES.map((g) => (
+                <div key={g.id} className="card p-4 text-center">
+                  <div className="text-3xl">{g.icon}</div>
+                  <h4 className="mt-2 text-xs font-bold leading-tight text-slate-800">{g.name}</h4>
+                  <p className="mt-1 text-[11px] text-slate-400">{g.category}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -288,10 +304,38 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-slate-400 sm:flex-row sm:px-6">
-          <Logo />
-          <span>Demo de producto · no apto para producción.</span>
+      <footer className="border-t border-slate-200 py-10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <Logo />
+              <p className="mt-2 max-w-xs text-sm text-slate-500">
+                Impulsamos personas, fortalecemos equipos y transformamos organizaciones.
+              </p>
+              <p className="mt-2 text-xs font-semibold text-brand-600">Innovación que transforma</p>
+            </div>
+            <div className="text-sm text-slate-500">
+              <div className="section-title mb-2">Contacto</div>
+              <p>
+                <a href="mailto:gerencia@eurekafdc.online" className="hover:text-brand-600">
+                  gerencia@eurekafdc.online
+                </a>
+              </p>
+              <p className="mt-1">
+                <a href="tel:+573016572297" className="hover:text-brand-600">
+                  301 657 2297
+                </a>
+              </p>
+              <p className="mt-1">
+                <a href="https://www.eurekafdc.online" target="_blank" rel="noreferrer" className="hover:text-brand-600">
+                  eurekafdc.online
+                </a>
+              </p>
+            </div>
+          </div>
+          <p className="mt-8 border-t border-slate-100 pt-5 text-center text-xs text-slate-400">
+            EXPERIA PLAY · demo de producto con datos simulados.
+          </p>
         </div>
       </footer>
     </div>

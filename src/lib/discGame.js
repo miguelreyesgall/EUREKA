@@ -1,4 +1,4 @@
-// Modelo y contenido de "Punto de Encuentro": la version digital del tablero
+// Modelo y contenido de "Código DISC": la version digital del tablero
 // fisico DISC. El tablero real usa fichas de 4 colores (estilos de comportamiento)
 // que los equipos colocan en el "punto de encuentro" central cuando logran que
 // al menos 3 estilos distintos participen visiblemente en resolver una carta-reto.

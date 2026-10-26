@@ -13,6 +13,8 @@ import Analytics from './pages/Analytics'
 import People from './pages/People'
 import Library from './pages/Library'
 import Settings from './pages/Settings'
+import Reinforcement from './pages/Reinforcement'
+import Diagnostic from './pages/Diagnostic'
 
 function RequireCompany({ children }) {
   const authed = useStore((s) => !!s.sessionAuth)
@@ -29,6 +31,7 @@ const protectedRoutes = [
   ['/app/sesion/:id/reporte', <Report />],
   ['/app/analitica', <Analytics />],
   ['/app/personas', <People />],
+  ['/app/refuerzo', <Reinforcement />],
   ['/app/biblioteca', <Library />],
   ['/app/configuracion', <Settings />]
 ]
@@ -38,6 +41,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/acceso" element={<Auth />} />
+      {/* Público: cada líder responde su diagnóstico con su propio enlace */}
+      <Route path="/diagnostico/:sessionId/:participantId" element={<Diagnostic />} />
 
       {protectedRoutes.map(([path, element]) => (
         <Route key={path} path={path} element={<RequireCompany>{element}</RequireCompany>} />

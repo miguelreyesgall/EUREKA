@@ -1,22 +1,31 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { distinctStyles, MIN_STYLES_TO_PLACE } from './discGame'
+import { scoreDiagnostic, teamStartingBalance } from './diagnostic'
+import { applyChoice, dilemmaForRound, SUMMIT } from './mandoIntegro'
 
 // -----------------------------------------------------------------------------
 // Capa de datos del demo. Todo vive en localStorage: no hay backend real.
-// Estructura:
+//
 //   companies: [{ id, name, email, password, createdAt }]
 //   sessionAuth: companyId | null   (empresa "logueada")
-//   sessions: [{
-//     id, companyId, gameId: 'punto-de-encuentro', name, purpose,
-//     createdAt, completedAt, status: 'draft' | 'in_progress' | 'completed',
-//     teams: [{ id, name, participants: [{ id, name, role, style: 'D'|'I'|'S'|'C' }] }],
-//     currentDeckIndex: 0..6   (6 = fase de cierre),
-//     rounds: [{ deckId, cardText, teamId, participantIds: [], placed, at }],
+//   sessions: [...]  -> la forma del estado depende del juego:
+//
+//   gameId 'codigo-disc'
+//     teams: [{ id, name, participants: [{ id, name, role, style }] }]
+//     currentDeckIndex: 0..6   (6 = fase de cierre)
+//     rounds: [{ deckId, cardText, teamId, participantIds: [], placed, at }]
 //     closingAnswers: [{ deckId, answer }]
-//   }]
+//
+//   gameId 'mando-integro'
+//     participants: [{ id, name, role, diagnostic: {...} | null }]
+//     balance: { cabeza, corazon, manos }   ·  position: 0..18
+//     turnIndex, rounds: [{ deckId, dilemmaIndex, leaderId, choice, balanced, position, at }]
+//     closingAnswers: { [deckId]: texto }
+//     learningMatrix: { [participantId]: { [blockId]: texto } }
+//     commitments: [{ participantId, dimension, text, reviewDate }]
 // -----------------------------------------------------------------------------
 
-const KEY = 'eureka.demo.v2'
+const KEY = 'eureka.demo.v3'
 
 const seed = () => ({
   companies: [],
@@ -129,14 +138,14 @@ export const actions = {
   },
 
   // ---------------------------------------------------------------------------
-  // Acciones - sesiones de "Punto de Encuentro"
+  // Acciones - sesiones de "Código DISC"
   // ---------------------------------------------------------------------------
 
   createDiscSession({ name, purpose, teams }) {
     const session = {
       id: uid('se'),
       companyId: state.sessionAuth,
-      gameId: 'punto-de-encuentro',
+      gameId: 'codigo-disc',
       name,
       purpose: purpose || '',
       createdAt: new Date().toISOString(),
@@ -199,6 +208,118 @@ export const actions = {
 
   completeSession(sessionId) {
     this.updateSession(sessionId, { status: 'completed', completedAt: new Date().toISOString() })
+  },
+
+  // ---------------------------------------------------------------------------
+  // Acciones - sesiones de "Mando Íntegro"
+  // ---------------------------------------------------------------------------
+
+  createMandoSession({ name, purpose, participants }) {
+    const session = {
+      id: uid('se'),
+      companyId: state.sessionAuth,
+      gameId: 'mando-integro',
+      name,
+      purpose: purpose || '',
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+      status: 'draft',
+      participants: participants.map((p) => ({
+        id: uid('pa'),
+        name: p.name.trim(),
+        role: p.role.trim() || 'Líder',
+        diagnostic: p.diagnostic || null
+      })),
+      balance: { cabeza: 4, corazon: 4, manos: 4 },
+      position: 0,
+      turnIndex: 0,
+      rounds: [],
+      closingAnswers: {},
+      learningMatrix: {},
+      commitments: []
+    }
+    setState((s) => ({ ...s, sessions: [...s.sessions, session] }))
+    return session
+  },
+
+  // El diagnóstico lo responde cada participante desde su propio enlace.
+  saveDiagnostic(sessionId, participantId, answers) {
+    const result = scoreDiagnostic(answers)
+    setState((s) => ({
+      ...s,
+      sessions: s.sessions.map((sess) => {
+        if (sess.id !== sessionId) return sess
+        return {
+          ...sess,
+          participants: sess.participants.map((p) =>
+            p.id === participantId ? { ...p, diagnostic: { ...result, answers, at: new Date().toISOString() } } : p
+          )
+        }
+      })
+    }))
+    return result
+  },
+
+  // Al iniciar, la Balanza arranca en el promedio de los diagnósticos del grupo
+  // en vez de 0-0-0, para que la partida refleje su patrón real de liderazgo.
+  startMandoSession(sessionId) {
+    setState((s) => ({
+      ...s,
+      sessions: s.sessions.map((sess) =>
+        sess.id === sessionId
+          ? {
+              ...sess,
+              status: 'in_progress',
+              balance: teamStartingBalance(sess.participants),
+              position: 0,
+              turnIndex: 0,
+              rounds: []
+            }
+          : sess
+      )
+    }))
+  },
+
+  recordMandoChoice(sessionId, choice) {
+    setState((s) => ({
+      ...s,
+      sessions: s.sessions.map((sess) => {
+        if (sess.id !== sessionId) return sess
+        const roundIndex = sess.rounds.length
+        const { deck, dilemmaIndex } = dilemmaForRound(roundIndex)
+        const leader = sess.participants[sess.turnIndex % sess.participants.length]
+        const next = applyChoice({ balance: sess.balance, position: sess.position }, choice)
+
+        return {
+          ...sess,
+          balance: next.balance,
+          position: next.position,
+          turnIndex: sess.turnIndex + 1,
+          rounds: [
+            ...sess.rounds,
+            {
+              deckId: deck.id,
+              dilemmaIndex,
+              leaderId: leader?.id || null,
+              leaderName: leader?.name || '',
+              choice,
+              balanced: next.balanced,
+              steps: next.steps,
+              position: next.position,
+              at: new Date().toISOString()
+            }
+          ]
+        }
+      })
+    }))
+  },
+
+  saveMandoClosing(sessionId, { closingAnswers, learningMatrix, commitments }) {
+    this.updateSession(sessionId, {
+      ...(closingAnswers ? { closingAnswers } : {}),
+      ...(learningMatrix ? { learningMatrix } : {}),
+      ...(commitments ? { commitments } : {})
+    })
   },
 
   deleteSession(sessionId) {
@@ -313,7 +434,7 @@ function buildDemoCompany() {
   const completedSession = {
     id: 'se_demo_q3',
     companyId,
-    gameId: 'punto-de-encuentro',
+    gameId: 'codigo-disc',
     name: 'Retro trimestral · Squad Producto',
     purpose: 'Cerrar el trimestre y detectar dónde reforzar al equipo antes del próximo ciclo.',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
@@ -328,7 +449,7 @@ function buildDemoCompany() {
   const draftSession = {
     id: 'se_demo_onb',
     companyId,
-    gameId: 'punto-de-encuentro',
+    gameId: 'codigo-disc',
     name: 'Onboarding · Nuevo squad Growth',
     purpose: 'Primera dinámica del equipo recién formado para establecer una línea base.',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
@@ -350,7 +471,135 @@ function buildDemoCompany() {
     closingAnswers: []
   }
 
-  return { company, sessions: [completedSession, draftSession] }
+  return { company, sessions: [completedSession, draftSession, buildMandoDemoSession(companyId)] }
+}
+
+// Sesión de "Mando Íntegro" ya jugada hasta la Cumbre, con diagnósticos
+// aplicados y compromisos firmados, para poder mostrar el reporte completo.
+function buildMandoDemoSession(companyId) {
+  const people = [
+    { id: 'pa_m1', name: 'Andrea Molina', role: 'Gerente de Operaciones', ranked: ['cabeza', 'manos', 'corazon'] },
+    { id: 'pa_m2', name: 'Julián Restrepo', role: 'Líder Comercial', ranked: ['manos', 'cabeza', 'corazon'] },
+    { id: 'pa_m3', name: 'Paola Guzmán', role: 'Jefe de Talento Humano', ranked: ['corazon', 'cabeza', 'manos'] },
+    { id: 'pa_m4', name: 'Esteban Cárdenas', role: 'Coordinador de Proyectos', ranked: ['cabeza', 'corazon', 'manos'] }
+  ]
+
+  const participants = people.map((p) => {
+    const net = { cabeza: 0, corazon: 0, manos: 0 }
+    p.ranked.forEach((id, i) => {
+      net[id] = [7, 1, -5][i]
+    })
+    return {
+      id: p.id,
+      name: p.name,
+      role: p.role,
+      diagnostic: {
+        net,
+        ranked: p.ranked,
+        dominant: p.ranked[0],
+        weakest: p.ranked[2],
+        answeredRows: 18,
+        at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString()
+      }
+    }
+  })
+
+  // Secuencia real de decisiones: arranca inclinada a Cabeza y el equipo
+  // corrige hacia Corazón, terminando equilibrado en la Cumbre.
+  const choices = [
+    'cabeza', 'corazon', 'manos', 'corazon',
+    'cabeza', 'manos', 'corazon', 'cabeza',
+    'manos', 'corazon', 'cabeza', 'manos'
+  ]
+
+  let balance = { cabeza: 5, corazon: 4, manos: 4 }
+  let position = 0
+  const rounds = []
+  const base = Date.now() - 1000 * 60 * 60 * 24 * 7
+
+  choices.forEach((choice, i) => {
+    if (position >= SUMMIT) return
+    const { deck, dilemmaIndex } = dilemmaForRound(i)
+    const leader = participants[i % participants.length]
+    const next = applyChoice({ balance, position }, choice)
+    balance = next.balance
+    position = next.position
+    rounds.push({
+      deckId: deck.id,
+      dilemmaIndex,
+      leaderId: leader.id,
+      leaderName: leader.name,
+      choice,
+      balanced: next.balanced,
+      steps: next.steps,
+      position,
+      at: new Date(base + i * 1000 * 60 * 3).toISOString()
+    })
+  })
+
+  return {
+    id: 'se_demo_mando',
+    companyId,
+    gameId: 'mando-integro',
+    name: 'Comité de líderes · Cumbre de liderazgo',
+    purpose: 'Ver desde dónde lidera cada jefe de área cuando la decisión es suya.',
+    createdAt: new Date(base).toISOString(),
+    completedAt: new Date(base + 1000 * 60 * 58).toISOString(),
+    status: 'completed',
+    participants,
+    balance,
+    position,
+    turnIndex: rounds.length,
+    rounds,
+    closingAnswers: {
+      decisiones: 'En el dilema del proyecto con datos incompletos casi todos querían decidir solos.',
+      feedback: 'Nos costó sostener honestidad y cuidado en la misma frase.',
+      cambio: 'Cuando todo cambia rápido se nos olvida primero el Corazón.',
+      conflicto: 'Nos costó más llegar a una acción concreta que entender los hechos.',
+      hibrido: 'La distancia nos empujó a resolver por Manos, sin preguntar cómo estaban.',
+      bienestar: 'Usamos poco la Cabeza para cuidar nuestro propio bienestar como líderes.'
+    },
+    learningMatrix: {
+      pa_m1: {
+        autoconocimiento: 'Bajo presión me voy directo a los datos y dejo de preguntar.',
+        reconocimiento: 'Paola mostró que validar la emoción no frena la decisión.',
+        aplicacion: 'El dilema de automatizar el proceso es literalmente lo que tengo esta semana.',
+        compromiso: 'Preguntar antes de concluir en las reuniones de operación.'
+      },
+      pa_m3: {
+        autoconocimiento: 'Evito el conflicto directo más de lo que creía.',
+        reconocimiento: 'Julián cierra con acciones concretas y eso da calma al equipo.',
+        aplicacion: 'La conversación de la promoción que vengo postergando.',
+        compromiso: 'Tener esa conversación difícil antes del viernes.'
+      }
+    },
+    commitments: [
+      {
+        participantId: 'pa_m1',
+        dimension: 'corazon',
+        text: 'Abrir cada comité preguntando cómo llega el equipo, antes de revisar indicadores.',
+        reviewDate: new Date(base + 1000 * 60 * 60 * 24 * 7).toISOString().slice(0, 10)
+      },
+      {
+        participantId: 'pa_m2',
+        dimension: 'corazon',
+        text: 'Hablar con Camilo sobre su carga antes de reasignarle el cliente nuevo.',
+        reviewDate: new Date(base + 1000 * 60 * 60 * 24 * 5).toISOString().slice(0, 10)
+      },
+      {
+        participantId: 'pa_m3',
+        dimension: 'manos',
+        text: 'Cerrar la conversación de promoción con un plan escrito y fecha.',
+        reviewDate: new Date(base + 1000 * 60 * 60 * 24 * 4).toISOString().slice(0, 10)
+      },
+      {
+        participantId: 'pa_m4',
+        dimension: 'manos',
+        text: 'Definir el primer paso del proyecto estancado y ejecutarlo en 48 horas.',
+        reviewDate: new Date(base + 1000 * 60 * 60 * 24 * 2).toISOString().slice(0, 10)
+      }
+    ]
+  }
 }
 
 export { uid }

@@ -14,6 +14,7 @@ import { CLOSING_DECK, DECKS, DISC_STYLES, MIN_STYLES_TO_PLACE, distinctStyles, 
 import { currentStreak, teamBadges, teamPoints } from '../lib/achievements'
 import { randomClosingAnswers } from '../lib/fakeData'
 import { GAME_MAP } from '../lib/games'
+import MandoRoom from './mando/MandoRoom'
 import { toast } from '../lib/toast'
 
 export default function SessionRoom() {
@@ -39,8 +40,9 @@ export default function SessionRoom() {
   }
 
   const game = GAME_MAP[session.gameId]
-  const deckIndex = Math.min(session.currentDeckIndex ?? 0, DECKS.length)
-  const playing = session.status === 'in_progress' && session.currentDeckIndex < DECKS.length
+  const isMando = session.gameId === 'mando-integro'
+  const deckIndex = isMando ? 0 : Math.min(session.currentDeckIndex ?? 0, DECKS.length)
+  const playing = !isMando && session.status === 'in_progress' && session.currentDeckIndex < DECKS.length
 
   return (
     <AppShell>
@@ -63,7 +65,9 @@ export default function SessionRoom() {
         }
       />
 
-      {session.status === 'in_progress' && (
+      {isMando && <MandoRoom session={session} />}
+
+      {!isMando && session.status === 'in_progress' && (
         <div className="card mb-5 flex flex-wrap items-center gap-4 p-4">
           <div className="min-w-[160px] flex-1">
             <div className="mb-1.5 flex justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -94,12 +98,12 @@ export default function SessionRoom() {
         </div>
       )}
 
-      {session.status === 'draft' && <Lobby session={session} />}
+      {!isMando && session.status === 'draft' && <Lobby session={session} />}
       {playing && <RoundConsole session={session} />}
-      {session.status === 'in_progress' && session.currentDeckIndex >= DECKS.length && (
+      {!isMando && session.status === 'in_progress' && session.currentDeckIndex >= DECKS.length && (
         <ClosingConsole session={session} />
       )}
-      {session.status === 'completed' && <VictoryScreen session={session} />}
+      {!isMando && session.status === 'completed' && <VictoryScreen session={session} />}
     </AppShell>
   )
 }

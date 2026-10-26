@@ -16,6 +16,7 @@ import {
   IconPlus,
   IconSearch,
   IconSettings,
+  IconSparkles,
   IconUsers
 } from './icons'
 
@@ -32,7 +33,8 @@ const NAV_SECTIONS = [
     title: 'Equipo',
     items: [
       { to: '/app/personas', label: 'Personas', Icon: IconUsers },
-      { to: '/app/analitica', label: 'Analítica', Icon: IconChart }
+      { to: '/app/analitica', label: 'Analítica', Icon: IconChart },
+      { to: '/app/refuerzo', label: 'Refuerzo', Icon: IconSparkles }
     ]
   },
   {
@@ -118,7 +120,7 @@ export default function AppShell({ children }) {
             </span>
           </button>
 
-          <Link to="/app/juegos/punto-de-encuentro/nueva" className="btn-primary btn-sm ml-2 hidden sm:inline-flex lg:ml-auto">
+          <Link to="/app/juegos/codigo-disc/nueva" className="btn-primary btn-sm ml-2 hidden sm:inline-flex lg:ml-auto">
             <IconPlus className="h-3.5 w-3.5" />
             Nueva sesión
           </Link>

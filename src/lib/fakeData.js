@@ -98,3 +98,118 @@ export const randomPurpose = () => pickOne(PURPOSE_SAMPLES)
 export function randomClosingAnswers(closingDeck) {
   return Object.fromEntries(closingDeck.map((c) => [c.deckId, pickOne(CLOSING_ANSWER_SAMPLES[c.deckId] || [''])]))
 }
+
+// ---------------------------------------------------------------------------
+// Mando Íntegro
+// ---------------------------------------------------------------------------
+
+export const LEADER_ROLES = [
+  'Gerente de Operaciones', 'Líder Comercial', 'Jefe de Talento Humano', 'Coordinador de Proyectos',
+  'Gerente Financiero', 'Jefe de Planta', 'Líder de Tecnología', 'Director de Servicio'
+]
+
+export function generateFictionalLeaders(count) {
+  const names = shuffle(FICTIONAL_NAMES).slice(0, count)
+  const roles = shuffle(LEADER_ROLES)
+  return names.map((name, i) => ({ name, role: roles[i % roles.length] }))
+}
+
+const MANDO_CLOSING_SAMPLES = {
+  decisiones: [
+    'En el dilema de los datos incompletos casi todos queríamos decidir solos.',
+    'Nos dimos cuenta de que decidimos rápido para no sostener la incomodidad.'
+  ],
+  feedback: [
+    'Nos costó sostener honestidad y cuidado en la misma frase.',
+    'Fue más fácil dar el dato duro que reconocer la emoción del otro.'
+  ],
+  cambio: [
+    'Cuando todo cambia rápido se nos olvida primero el Corazón.',
+    'Saltamos a ejecutar sin explicar el porqué del cambio.'
+  ],
+  conflicto: [
+    'Nos costó más llegar a una acción concreta que entender los hechos.',
+    'Evitamos nombrar el conflicto hasta que ya era tarde.'
+  ],
+  hibrido: [
+    'La distancia nos empujó a resolver por Manos, sin preguntar cómo estaban.',
+    'El equipo remoto quedó fuera de las decisiones sin que nos diéramos cuenta.'
+  ],
+  bienestar: [
+    'Usamos poco la Cabeza para cuidar nuestro propio bienestar como líderes.',
+    'Reconocemos el esfuerzo del equipo, pero no ajustamos el ritmo.'
+  ],
+  general: [
+    'Necesitamos fortalecer el Corazón: preguntar antes de resolver.',
+    'Esta semana toca poner Manos: cerrar lo que venimos postergando.'
+  ]
+}
+
+const MATRIX_SAMPLES = {
+  autoconocimiento: [
+    'Bajo presión me voy directo a los datos y dejo de preguntar.',
+    'Descubrí que evito el conflicto directo más de lo que creía.',
+    'Cuando aprieta el tiempo decido sola y luego informo.'
+  ],
+  reconocimiento: [
+    'Ver a alguien validar la emoción sin frenar la decisión me abrió los ojos.',
+    'Me sirvió ver cómo otro cierra siempre con una acción concreta.',
+    'Alguien de la mesa preguntó algo que yo había dado por obvio.'
+  ],
+  aplicacion: [
+    'El dilema de automatizar el proceso es literalmente lo que tengo esta semana.',
+    'La conversación de la promoción que vengo postergando.',
+    'Tengo dos personas de mi equipo sin hablarse hace semanas.'
+  ],
+  compromiso: [
+    'Preguntar antes de concluir en las reuniones de operación.',
+    'Tener la conversación difícil antes del viernes.',
+    'Cerrar un pendiente viejo antes de abrir uno nuevo.'
+  ]
+}
+
+const COMMITMENT_SAMPLES = {
+  cabeza: [
+    'Escribir los 3 criterios de decisión antes del próximo comité.',
+    'Pedir el dato que falta antes de cerrar la propuesta del cliente.'
+  ],
+  corazon: [
+    'Abrir cada comité preguntando cómo llega el equipo, antes de los indicadores.',
+    'Agendar 15 minutos con la persona que menos ha hablado este mes.'
+  ],
+  manos: [
+    'Definir el primer paso del proyecto estancado y ejecutarlo en 48 horas.',
+    'Cerrar las próximas tres reuniones con un acuerdo escrito.'
+  ]
+}
+
+export function randomMandoClosing(session) {
+  const closingAnswers = Object.fromEntries(
+    Object.entries(MANDO_CLOSING_SAMPLES).map(([k, v]) => [k, pickOne(v)])
+  )
+
+  const learningMatrix = {}
+  for (const p of session.participants) {
+    learningMatrix[p.id] = Object.fromEntries(
+      Object.entries(MATRIX_SAMPLES).map(([k, v]) => [k, pickOne(v)])
+    )
+  }
+
+  const inDays = (n) => {
+    const d = new Date()
+    d.setDate(d.getDate() + n)
+    return d.toISOString().slice(0, 10)
+  }
+
+  const commitments = session.participants.map((p, i) => {
+    const dimension = p.diagnostic?.weakest || pickOne(['cabeza', 'corazon', 'manos'])
+    return {
+      participantId: p.id,
+      dimension,
+      text: pickOne(COMMITMENT_SAMPLES[dimension] || COMMITMENT_SAMPLES.corazon),
+      reviewDate: inDays(3 + i)
+    }
+  })
+
+  return { closingAnswers, learningMatrix, commitments }
+}

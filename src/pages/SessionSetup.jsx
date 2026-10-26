@@ -8,21 +8,15 @@ import { DISC_STYLES, MIN_STYLES_TO_PLACE } from '../lib/discGame'
 import { GAME_MAP } from '../lib/games'
 import { generateFictionalMembers, randomPurpose, randomSessionName } from '../lib/fakeData'
 import { toast } from '../lib/toast'
+import MandoSetup from './mando/MandoSetup'
 
 const emptyParticipant = () => ({ name: '', role: '', style: '' })
 
+// Cada juego tiene su propio armado de sesión.
 export default function SessionSetup() {
   const { gameId } = useParams()
   const navigate = useNavigate()
   const game = GAME_MAP[gameId]
-
-  const [name, setName] = useState('')
-  const [purpose, setPurpose] = useState('')
-  const [teams, setTeams] = useState([
-    { name: 'Equipo 1', participants: [emptyParticipant(), emptyParticipant()] },
-    { name: 'Equipo 2', participants: [emptyParticipant(), emptyParticipant()] }
-  ])
-  const [error, setError] = useState('')
 
   if (!game || game.status !== 'available') {
     return (
@@ -30,7 +24,7 @@ export default function SessionSetup() {
         <EmptyState
           emoji="🔒"
           title="Juego no disponible"
-          description="Este juego todavía no permite crear sesiones."
+          description="Este producto es un kit físico del catálogo: no se juega desde la plataforma."
           action={
             <button onClick={() => navigate('/app/juegos')} className="btn-primary">
               Volver al marketplace
@@ -40,6 +34,21 @@ export default function SessionSetup() {
       </AppShell>
     )
   }
+
+  return <AppShell>{game.id === 'mando-integro' ? <MandoSetup game={game} /> : <DiscSetup game={game} />}</AppShell>
+}
+
+function DiscSetup({ game }) {
+  const gameId = game.id
+  const navigate = useNavigate()
+
+  const [name, setName] = useState('')
+  const [purpose, setPurpose] = useState('')
+  const [teams, setTeams] = useState([
+    { name: 'Equipo 1', participants: [emptyParticipant(), emptyParticipant()] },
+    { name: 'Equipo 2', participants: [emptyParticipant(), emptyParticipant()] }
+  ])
+  const [error, setError] = useState('')
 
   const setTeamName = (ti, value) =>
     setTeams((ts) => ts.map((t, i) => (i === ti ? { ...t, name: value } : t)))
@@ -92,7 +101,7 @@ export default function SessionSetup() {
   const styleCount = (participants) => new Set(participants.filter((p) => p.style).map((p) => p.style)).size
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         breadcrumbs={[
           { label: 'Juegos', to: '/app/juegos' },
@@ -245,6 +254,6 @@ export default function SessionSetup() {
           </button>
         </div>
       </form>
-    </AppShell>
+    </>
   )
 }

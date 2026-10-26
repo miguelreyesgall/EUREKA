@@ -6,6 +6,7 @@ import { EmptyState, PageHeader, ProgressBar } from '../components/ui'
 import { IconPlay, IconPlus, IconSearch, IconTrophy } from '../components/icons'
 import { useCompanySessions } from '../lib/store'
 import { GAME_MAP } from '../lib/games'
+import { sessionComposition, sessionPeople } from '../lib/sessions'
 import { DECKS } from '../lib/discGame'
 
 const FILTERS = [
@@ -46,7 +47,7 @@ export default function Sessions() {
         title="Sesiones"
         description="Todas las dinámicas creadas por tu empresa, en cualquier estado."
         actions={
-          <Link to="/app/juegos/punto-de-encuentro/nueva" className="btn-primary">
+          <Link to="/app/juegos/codigo-disc/nueva" className="btn-primary">
             <IconPlus className="h-4 w-4" />
             Nueva sesión
           </Link>
@@ -104,7 +105,6 @@ export default function Sessions() {
         ) : (
           visible.map((s) => {
             const game = GAME_MAP[s.gameId]
-            const participants = (s.teams || []).reduce((n, t) => n + t.participants.length, 0)
             const placed = (s.rounds || []).filter((r) => r.placed).length
             const deckIndex = Math.min(s.currentDeckIndex ?? 0, DECKS.length)
 
@@ -129,7 +129,7 @@ export default function Sessions() {
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                         <span>{game?.name}</span>
                         <span className="text-slate-300">·</span>
-                        <span>{(s.teams || []).length} equipos · {participants} personas</span>
+                        <span>{sessionComposition(s)}</span>
                         <span className="text-slate-300">·</span>
                         <span>{fmt(s.createdAt)}</span>
                       </div>

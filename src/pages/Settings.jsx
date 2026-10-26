@@ -4,10 +4,11 @@ import { PageHeader, ProgressBar, SectionHeader } from '../components/ui'
 import { IconCheck } from '../components/icons'
 import { actions, useCompanySessions, useCurrentCompany } from '../lib/store'
 import { GAMES } from '../lib/games'
+import { sessionComposition, sessionPeople } from '../lib/sessions'
 import { toast } from '../lib/toast'
 
 const PLAN_FEATURES = [
-  'Sesiones ilimitadas de Punto de Encuentro',
+  'Sesiones ilimitadas de Código DISC',
   'Reportes grupales e individuales',
   'Análisis generado por IA en cada sesión',
   'Directorio de personas con historial DISC'
@@ -19,7 +20,7 @@ export default function Settings() {
   const navigate = useNavigate()
 
   const seatsUsed = new Set(
-    sessions.flatMap((s) => (s.teams || []).flatMap((t) => t.participants.map((p) => p.name.trim().toLowerCase())))
+    sessions.flatMap((s) => sessionPeople(s).map((p) => p.name.trim().toLowerCase()))
   ).size
   const activeGames = GAMES.filter((g) => g.status === 'available').length
 

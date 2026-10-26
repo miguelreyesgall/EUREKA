@@ -7,19 +7,38 @@ import AIInsightsPanel from '../components/AIInsightsPanel'
 import { EmptyState, PageHeader, SectionHeader, Tabs } from '../components/ui'
 import { IconTrophy } from '../components/icons'
 import { useSession } from '../lib/store'
+import MandoReport from './mando/MandoReport'
 import { computeDiscReport, DECKS, DISC_STYLES, MIN_STYLES_TO_PLACE } from '../lib/discGame'
 import { longestStreak, teamBadges, teamPoints } from '../lib/achievements'
 
 export default function Report() {
   const { id } = useParams()
   const session = useSession(id)
-  const report = useMemo(() => (session ? computeDiscReport(session) : null), [session])
+  const isMando = session?.gameId === 'mando-integro'
+  // Mando Íntegro tiene su propio motor de reporte: no pasar por el de DISC.
+  const report = useMemo(() => (session && !isMando ? computeDiscReport(session) : null), [session, isMando])
   const [tab, setTab] = useState('grupal')
 
-  if (!session || !report) {
+  if (!session) {
     return (
       <AppShell>
         <EmptyState emoji="🔍" title="Reporte no encontrado" description="La sesión que buscas no existe." />
+      </AppShell>
+    )
+  }
+
+  if (isMando) {
+    return (
+      <AppShell>
+        <MandoReport session={session} />
+      </AppShell>
+    )
+  }
+
+  if (!report) {
+    return (
+      <AppShell>
+        <EmptyState emoji="🔍" title="Reporte no disponible" description="No se pudo generar el reporte." />
       </AppShell>
     )
   }
@@ -30,7 +49,7 @@ export default function Report() {
     <AppShell>
       <PageHeader
         breadcrumbs={[{ label: 'Analítica', to: '/app/analitica' }, { label: session.name }]}
-        eyebrow={<span className="chip bg-brand-50 text-brand-700">Reporte · Punto de Encuentro</span>}
+        eyebrow={<span className="chip bg-brand-50 text-brand-700">Reporte · Código DISC</span>}
         title={session.name}
         description={`${report.totalPlaced} de ${report.totalRounds} fichas colocadas · ${
           session.completedAt ? `cerrada el ${fmt(session.completedAt)}` : 'en curso'

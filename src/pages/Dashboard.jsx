@@ -7,6 +7,7 @@ import { EmptyState, PageHeader, ProgressBar, SectionHeader, StatCard } from '..
 import { IconChart, IconGrid, IconPlay, IconPlus, IconTarget, IconUsers } from '../components/icons'
 import { actions, useCompanySessions, useCurrentCompany } from '../lib/store'
 import { GAMES, GAME_MAP } from '../lib/games'
+import { sessionComposition, sessionPeople } from '../lib/sessions'
 import { DECKS, DISC_STYLES } from '../lib/discGame'
 import { aggregatePeople } from '../lib/people'
 import { toast } from '../lib/toast'
@@ -51,7 +52,7 @@ export default function Dashboard() {
             >
               Cargar datos de ejemplo
             </button>
-            <Link to="/app/juegos/punto-de-encuentro/nueva" className="btn-primary btn-sm">
+            <Link to="/app/juegos/codigo-disc/nueva" className="btn-primary btn-sm">
               <IconPlus className="h-3.5 w-3.5" />
               Nueva sesión
             </Link>
@@ -151,9 +152,9 @@ export default function Dashboard() {
           ) : (
             <>
               <p className="text-sm text-slate-500">
-                Crea una sesión de Punto de Encuentro, arma los equipos y guía la dinámica desde la consola.
+                Crea una sesión de Código DISC, arma los equipos y guía la dinámica desde la consola.
               </p>
-              <Link to="/app/juegos/punto-de-encuentro/nueva" className="btn-primary mt-auto w-full">
+              <Link to="/app/juegos/codigo-disc/nueva" className="btn-primary mt-auto w-full">
                 <IconPlus className="h-4 w-4" />
                 Crear sesión
               </Link>
@@ -216,7 +217,6 @@ export default function Dashboard() {
           <div className="card divide-y divide-slate-100">
             {sessions.slice(0, 5).map((s) => {
               const game = GAME_MAP[s.gameId]
-              const participants = (s.teams || []).reduce((n, t) => n + t.participants.length, 0)
               return (
                 <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4 transition hover:bg-slate-50/70">
                   <div className="flex min-w-0 items-center gap-3">
@@ -229,7 +229,7 @@ export default function Dashboard() {
                         <StatusBadge status={s.status} />
                       </div>
                       <div className="text-[11px] text-slate-400">
-                        {game?.name} · {(s.teams || []).length} equipos · {participants} personas · {fmt(s.createdAt)}
+                        {game?.name} · {sessionComposition(s)} · {fmt(s.createdAt)}
                       </div>
                     </div>
                   </div>

@@ -6,6 +6,7 @@ import { IconChevronDown, IconSearch, IconTarget, IconUsers } from '../component
 import { useCompanySessions } from '../lib/store'
 import { aggregatePeople } from '../lib/people'
 import { DISC_STYLES, STYLE_MAP } from '../lib/discGame'
+import { DIMENSION_MAP } from '../lib/diagnostic'
 
 export default function People() {
   const sessions = useCompanySessions()
@@ -73,7 +74,7 @@ export default function People() {
             }
             action={
               allPeople.length === 0 && (
-                <Link to="/app/juegos/punto-de-encuentro/nueva" className="btn-primary">
+                <Link to="/app/juegos/codigo-disc/nueva" className="btn-primary">
                   Crear sesión
                 </Link>
               )
@@ -92,6 +93,12 @@ export default function People() {
             <div className="divide-y divide-slate-100">
               {people.map((p) => {
                 const style = p.style ? STYLE_MAP[p.style] : null
+                const dim = p.dimension ? DIMENSION_MAP[p.dimension] : null
+                const badge = style
+                  ? { color: style.color, letter: style.id, label: style.label }
+                  : dim
+                    ? { color: dim.color, letter: dim.label[0], label: dim.label }
+                    : null
                 const open = openName === p.name
                 const rate = p.totalContributed ? Math.round((p.totalSuccessful / p.totalContributed) * 100) : 0
                 return (
@@ -103,10 +110,10 @@ export default function People() {
                       <span className="flex min-w-0 items-center gap-3">
                         <span
                           className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
-                          style={{ background: style?.color || '#94a3b8' }}
-                          title={style?.label || 'Sin ficha'}
+                          style={{ background: badge?.color || '#94a3b8' }}
+                          title={badge?.label || 'Sin perfil'}
                         >
-                          {style?.id || '?'}
+                          {badge?.letter || '?'}
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate font-semibold text-slate-800">{p.name}</span>
@@ -119,7 +126,7 @@ export default function People() {
                       <span className="hidden text-slate-500 md:block">{p.sessionsCount}</span>
                       <span className="hidden md:block">
                         <span className="text-xs font-semibold text-slate-600">{rate}%</span>
-                        <ProgressBar className="mt-1" value={rate} max={100} color={style?.color} />
+                        <ProgressBar className="mt-1" value={rate} max={100} color={badge?.color} />
                       </span>
                       <span className="hidden text-xs text-slate-400 md:block">{fmt(p.lastPlayed)}</span>
                       <IconChevronDown

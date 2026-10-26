@@ -5,16 +5,21 @@ import { EmptyState, PageHeader, ProgressBar, StatCard } from '../components/ui'
 import { IconChart, IconSparkles, IconTarget, IconTrophy } from '../components/icons'
 import { useCompanySessions } from '../lib/store'
 import { computeDiscReport, DISC_STYLES } from '../lib/discGame'
+import { computeMandoReport } from '../lib/mandoIntegro'
 import { GAME_MAP } from '../lib/games'
+import { sessionComposition, sessionPeople } from '../lib/sessions'
 
 export default function Analytics() {
   const navigate = useNavigate()
   const sessions = useCompanySessions()
   const completed = useMemo(() => sessions.filter((s) => s.status === 'completed'), [sessions])
 
+  // El agregado de fichas/estilos solo aplica a Código DISC; Mando Íntegro
+  // tiene su propia métrica y se resume en su tarjeta.
   const { reports, aggregate } = useMemo(() => {
-    const reports = new Map(completed.map((s) => [s.id, computeDiscReport(s)]))
-    if (!completed.length) return { reports, aggregate: null }
+    const disc = completed.filter((s) => s.gameId === 'codigo-disc')
+    const reports = new Map(disc.map((s) => [s.id, computeDiscReport(s)]))
+    if (!disc.length) return { reports, aggregate: null }
     const list = [...reports.values()]
     const totalPlaced = list.reduce((n, r) => n + r.totalPlaced, 0)
     const totalRounds = list.reduce((n, r) => n + r.totalRounds, 0)
@@ -87,7 +92,7 @@ export default function Analytics() {
           <EmptyState
             emoji="📊"
             title="Aún no hay reportes"
-            description="Juega y cierra una sesión de Punto de Encuentro para ver aquí su reporte grupal, individual y el análisis de IA."
+            description="Juega y cierra una sesión de Código DISC para ver aquí su reporte grupal, individual y el análisis de IA."
             action={
               <Link to="/app/juegos" className="btn-primary">
                 Ir al marketplace
@@ -97,9 +102,9 @@ export default function Analytics() {
         ) : (
           <div className="space-y-3">
             {completed.map((s) => {
-              const report = reports.get(s.id)
               const game = GAME_MAP[s.gameId]
-              const participants = (s.teams || []).reduce((n, t) => n + t.participants.length, 0)
+              const isMando = s.gameId === 'mando-integro'
+              const report = isMando ? computeMandoReport(s) : reports.get(s.id)
               return (
                 <div key={s.id} className="card card-hover p-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -113,10 +118,16 @@ export default function Analytics() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="truncate text-base font-bold text-slate-900">{s.name}</h3>
-                          <span className="chip bg-amber-400/15 text-amber-600">
-                            <IconTrophy className="h-3 w-3" />
-                            {report.winners.map((w) => w.name).join(' y ') || 'Sin ganador'}
-                          </span>
+                          {isMando ? (
+                            <span className="chip bg-sky-50 capitalize text-sky-700">
+                              {report.ending === 'equilibrado' ? '⚖️' : '😮‍💨'} {report.ending}
+                            </span>
+                          ) : (
+                            <span className="chip bg-amber-400/15 text-amber-600">
+                              <IconTrophy className="h-3 w-3" />
+                              {report.winners.map((w) => w.name).join(' y ') || 'Sin ganador'}
+                            </span>
+                          )}
                           <span className="chip bg-brand-50 text-brand-700">
                             <IconSparkles className="h-3 w-3" />
                             Insight IA
@@ -125,9 +136,13 @@ export default function Analytics() {
                         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                           <span>Cerrada {fmt(s.completedAt)}</span>
                           <span className="text-slate-300">·</span>
-                          <span>{(s.teams || []).length} equipos · {participants} personas</span>
+                          <span>{sessionComposition(s)}</span>
                           <span className="text-slate-300">·</span>
-                          <span>{report.totalPlaced}/{report.totalRounds} fichas</span>
+                          <span>
+                            {isMando
+                              ? `${report.bonusRounds}/${report.totalRounds} turnos en equilibrio`
+                              : `${report.totalPlaced}/${report.totalRounds} fichas`}
+                          </span>
                         </div>
                       </div>
                     </div>

@@ -6,7 +6,18 @@ import { EmptyState, PageHeader, ProgressBar, SectionHeader } from '../component
 import { IconClock, IconLayers, IconPlus, IconUsers } from '../components/icons'
 import { GAME_MAP } from '../lib/games'
 import { DECKS, DISC_STYLES, MIN_STYLES_TO_PLACE, ROUND_MINUTES } from '../lib/discGame'
+import Balanza from '../components/Balanza'
+import SenderoBoard from '../components/SenderoBoard'
+import {
+  DILEMMA_DECKS,
+  DIMENSIONS,
+  FACILITATOR_AGENDA,
+  FACILITATOR_TIPS,
+  PATH_LENGTH
+} from '../lib/mandoIntegro'
+import { DIAGNOSTIC_MINUTES } from '../lib/diagnostic'
 import { useCompanySessions } from '../lib/store'
+import { sessionComposition, sessionPeople } from '../lib/sessions'
 
 const DEMO_BOARD_TEAM = {
   id: 'demo',
@@ -83,16 +94,9 @@ export default function GameDetail() {
       />
 
       {!live ? (
-        <EmptyState
-          emoji="🔒"
-          title="Muy pronto en tu cuenta"
-          description="Este juego todavía no está habilitado para jugarse. Mientras tanto puedes explorar Punto de Encuentro, la dinámica activa de tu cuenta."
-          action={
-            <Link to="/app/juegos/punto-de-encuentro" className="btn-primary">
-              Ir a Punto de Encuentro
-            </Link>
-          }
-        />
+        <PartnerKit game={game} />
+      ) : game.id === 'mando-integro' ? (
+        <MandoOverview game={game} />
       ) : (
         <>
           {/* Tablero */}
@@ -174,7 +178,6 @@ export default function GameDetail() {
             ) : (
               <div className="card divide-y divide-slate-100">
                 {sessions.map((s) => {
-                  const participants = (s.teams || []).reduce((n, t) => n + t.participants.length, 0)
                   const deckIndex = Math.min(s.currentDeckIndex ?? 0, DECKS.length)
                   return (
                     <div key={s.id} className="flex flex-wrap items-center justify-between gap-4 p-5 transition hover:bg-slate-50/70">
@@ -186,7 +189,7 @@ export default function GameDetail() {
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                           <span>Creada {fmt(s.createdAt)}</span>
                           <span className="text-slate-300">·</span>
-                          <span>{(s.teams || []).length} equipos · {participants} personas</span>
+                          <span>{sessionComposition(s)}</span>
                         </div>
                         {s.status !== 'draft' && <ProgressBar className="mt-2.5 max-w-xs" value={deckIndex} max={DECKS.length} />}
                       </div>
@@ -215,6 +218,132 @@ function MiniFact({ Icon, label, value }) {
       <div className="min-w-0">
         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
         <div className="truncate text-xs font-semibold text-slate-700">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------- Mando Íntegro */
+
+function MandoOverview({ game }) {
+  return (
+    <>
+      <div className="card grid gap-8 p-6 md:grid-cols-2 md:p-8">
+        <Balanza balance={{ cabeza: 6, corazon: 4, manos: 3 }} />
+        <SenderoBoard position={7} />
+      </div>
+
+      <div className="card mt-4 p-6">
+        <SectionHeader title="Así funciona" />
+        <p className="text-sm leading-relaxed text-slate-600">
+          El equipo recorre junto un sendero de <b className="text-slate-800">{PATH_LENGTH} casillas</b> de la Base a
+          la Cumbre. En cada turno un <b className="text-slate-800">Líder distinto</b> escucha al equipo pero decide
+          solo: Cabeza, Corazón o Manos. Esa columna sube en la Balanza y el equipo avanza una casilla —{' '}
+          <b className="text-slate-800">dos</b> si la Balanza sigue dentro de la zona de equilibrio. Liderar siempre
+          desde el mismo lugar cuesta el turno de bonificación.
+        </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <MiniFact Icon={IconUsers} label="Jugadores" value="4-6 por mesa" />
+          <MiniFact Icon={IconClock} label="Diagnóstico previo" value={`${DIAGNOSTIC_MINUTES.min}-${DIAGNOSTIC_MINUTES.max} min`} />
+          <MiniFact Icon={IconLayers} label="Dilemas" value={`${DILEMMA_DECKS.length} mazos · 30 cartas`} />
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="card p-6">
+          <SectionHeader title="Las tres dimensiones" />
+          <div className="space-y-3">
+            {DIMENSIONS.map((d) => (
+              <div key={d.id} className="flex items-start gap-3">
+                <span
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
+                  style={{ background: d.color }}
+                >
+                  {d.label[0]}
+                </span>
+                <div>
+                  <div className="text-sm font-bold text-slate-800">
+                    {d.label} <span className="font-medium text-slate-400">· {d.short}</span>
+                  </div>
+                  <div className="text-xs leading-relaxed text-slate-500">{d.risk}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card flex flex-col p-6">
+          <SectionHeader title="Mazos de dilemas" />
+          <div className="flex flex-wrap gap-2">
+            {DILEMMA_DECKS.map((d) => (
+              <span key={d.id} className="chip" style={{ background: `${d.color}14`, color: d.color }}>
+                <span>{d.icon}</span> {d.label}
+              </span>
+            ))}
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            30 dilemas con 3 respuestas cada uno. Ninguna es la correcta: cada una mueve la Balanza en su columna.
+          </p>
+          <Link to="/app/biblioteca" className="btn-ghost btn-sm mt-auto w-full">
+            Ver todos los dilemas en la biblioteca
+          </Link>
+        </div>
+      </div>
+
+      <div className="card mt-4 p-6">
+        <SectionHeader title="Manual del Guía · agenda de 60 minutos" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-slate-100">
+              {FACILITATOR_AGENDA.map(([time, block, what]) => (
+                <tr key={time}>
+                  <td className="whitespace-nowrap py-2.5 pr-4 font-mono text-xs text-slate-400">{time}</td>
+                  <td className="py-2.5 pr-4 font-bold text-slate-800">{block}</td>
+                  <td className="py-2.5 text-slate-600">{what}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-5">
+          <h3 className="section-title mb-2">Consejos para el Guía</h3>
+          <ul className="space-y-1.5">
+            {FACILITATOR_TIPS.map((t, i) => (
+              <li key={i} className="flex gap-2 text-xs leading-relaxed text-slate-600">
+                <span className="text-sky-500">•</span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/* ------------------------------------------------- Kits de alianza */
+
+function PartnerKit({ game }) {
+  return (
+    <div className="card overflow-hidden">
+      <div
+        className="relative flex h-44 items-center justify-center"
+        style={{ background: `linear-gradient(135deg, ${game.color}22, ${game.color}08)` }}
+      >
+        <div className="bg-dots absolute inset-0 opacity-60" />
+        <span className="relative text-7xl">{game.icon}</span>
+      </div>
+      <div className="p-8 text-center">
+        <span className="chip bg-slate-100 text-slate-600">Kit físico · en alianza con {game.partner}</span>
+        <h2 className="mt-3 text-xl font-extrabold text-slate-900">{game.name}</h2>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-slate-600">{game.description}</p>
+        <p className="mx-auto mt-4 max-w-md text-xs text-slate-400">
+          Este producto se entrega con material tangible y facilitación presencial, por eso no se juega desde la
+          plataforma. Escríbenos y coordinamos la experiencia para tu equipo.
+        </p>
+        <a href="mailto:gerencia@eurekafdc.online" className="btn-primary mt-6">
+          Solicitar este kit
+        </a>
       </div>
     </div>
   )

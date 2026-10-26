@@ -11,6 +11,7 @@ import {
   IconPlus,
   IconSearch,
   IconSettings,
+  IconSparkles,
   IconUsers
 } from './icons'
 
@@ -20,13 +21,14 @@ const NAV_COMMANDS = [
   { id: 'nav-juegos', label: 'Explorar juegos', group: 'Navegación', to: '/app/juegos', Icon: IconGrid },
   { id: 'nav-personas', label: 'Ver personas', group: 'Navegación', to: '/app/personas', Icon: IconUsers },
   { id: 'nav-analitica', label: 'Abrir analítica', group: 'Navegación', to: '/app/analitica', Icon: IconChart },
+  { id: 'nav-refuerzo', label: 'Refuerzo y microlearnings', group: 'Navegación', to: '/app/refuerzo', Icon: IconSparkles },
   { id: 'nav-biblioteca', label: 'Biblioteca de mazos y cartas', group: 'Navegación', to: '/app/biblioteca', Icon: IconLayers },
   { id: 'nav-config', label: 'Configuración de la cuenta', group: 'Navegación', to: '/app/configuracion', Icon: IconSettings },
   {
     id: 'action-nueva',
-    label: 'Crear nueva sesión de Punto de Encuentro',
+    label: 'Crear nueva sesión de Código DISC',
     group: 'Acciones',
-    to: '/app/juegos/punto-de-encuentro/nueva',
+    to: '/app/juegos/codigo-disc/nueva',
     Icon: IconPlus
   }
 ]
